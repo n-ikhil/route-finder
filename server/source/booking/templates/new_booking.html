@@ -1,0 +1,117 @@
+{% extends 'layouts/default/page.html' %} {% load bootstrap4 %} {% load i18n %}
+{% block content %}
+
+<script
+  type="text/javascript"
+  src="https://maps.googleapis.com/maps/api/js"
+></script>
+<script src="https://unpkg.com/location-picker/dist/location-picker.min.js"></script>
+<style type="text/css">
+  #map {
+    width: 50%;
+    height: 480px;
+  }
+  #map2 {
+    width: 50%;
+    height: 480px;
+  }
+  li {
+    display: inline;
+  }
+</style>
+
+<ul id="menu">
+  <li>
+    <div>
+      <h3>Your pickup location</h3>
+      <div id="map"></div>
+      <br />
+      <button id="confirmPosition">Confirm Position</button>
+      <br />
+      <p>On idle position: <span id="onIdlePositionView"></span></p>
+      <p>On click position: <span id="onClickPositionView"></span></p>
+    </div>
+  </li>
+  <li>
+    <div>
+      <h3>Your Drop location</h3>
+      <div id="map2"></div>
+      <br />
+      <button id="confirmPosition2">Confirm Position</button>
+      <br />
+      <p>On idle position: <span id="onIdlePositionView2"></span></p>
+      <p>On click position: <span id="onClickPositionView2"></span></p>
+    </div>
+  </li>
+</ul>
+<script>
+  // Get element references
+  var confirmBtn = document.getElementById("confirmPosition");
+  var onClickPositionView = document.getElementById("onClickPositionView");
+  var onIdlePositionView = document.getElementById("onIdlePositionView");
+  var map = document.getElementById("map");
+
+  // Initialize LocationPicker plugin
+  var lp = new locationPicker(
+    map,
+    {
+      setCurrentPosition: true, // You can omit this, defaults to true
+      lat: 28.7041,
+      lng: 77.1025,
+    },
+    {
+      zoom: 15, // You can set any google map options here, zoom defaults to 15
+    }
+  );
+
+  // Listen to button onclick event
+  confirmBtn.onclick = function () {
+    // Get current location and show it in HTML
+    var location = lp.getMarkerPosition();
+    onClickPositionView.innerHTML =
+      "The chosen location is " + location.lat + "," + location.lng;
+  };
+
+  // Listen to map idle event, listening to idle event more accurate than listening to ondrag event
+  google.maps.event.addListener(lp.map, "idle", function (event) {
+    // Get current location and show it in HTML
+    var location = lp.getMarkerPosition();
+    onIdlePositionView.innerHTML =
+      "The chosen location is " + location.lat + "," + location.lng;
+  });
+
+  var confirmBtn2 = document.getElementById("confirmPosition2");
+  var onClickPositionView2 = document.getElementById("onClickPositionView2");
+  var onIdlePositionView2 = document.getElementById("onIdlePositionView2");
+  var map2 = document.getElementById("map2");
+
+  // Initialize LocationPicker plugin
+  var lp2 = new locationPicker(
+    map2,
+    {
+      setCurrentPosition: true, // You can omit this, defaults to true
+      lat: 28.7041,
+      lng: 77.1025,
+    },
+    {
+      zoom: 15, // You can set any google map options here, zoom defaults to 15
+    }
+  );
+
+  // Listen to button onclick event
+  confirmBtn2.onclick = function () {
+    // Get current location and show it in HTML
+    var location2 = lp2.getMarkerPosition();
+    onClickPositionView2.innerHTML =
+      "The chosen location is " + location2.lat + "," + location2.lng;
+  };
+  // Listen to midle event, listening to idle event more accurate than listening to ondrag event
+  google.maps.event.addListener(lp2.map, "idle", function (event) {
+    // Get current location and show it in HTML
+    var location2 = lp2.getMarkerPosition();
+    onIdlePositionView2.innerHTML =
+      "The chosen location is " + location2.lat + "," + location2.lng;
+  });
+</script>
+
+{% endblock %}
