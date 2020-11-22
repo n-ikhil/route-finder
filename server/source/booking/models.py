@@ -31,7 +31,7 @@ class OperatingCities(models.Model):
 
 class Buses(models.Model):
     city = models.ForeignKey(OperatingCities, on_delete=models.CASCADE)
-    fuelefficiency = models.IntegerField()
+    fuelefficiency = models.IntegerField()# rupee per unit dist
     working = models.BooleanField(default=True)
 
     # whether the bus is usable

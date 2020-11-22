@@ -1,227 +1,104 @@
+import matplotlib
+from matplotlib import pyplot
 import sys
 from .models import *
-from django.core.wsgi import get_wsgi_application
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point, LineString
 import plotly_express as px
 import networkx as nx
 import osmnx as ox
-import random
-import os
-
+from .perms import *
+matplotlib.use('TkAgg')
 # from models import NPair
 ox.config(use_cache=True, log_console=True)
 
-location = "Delhi"
 
-
-def create_graph(loc, dist, transport_mode):
-    """Transport mode = ‘walk’, ‘bike’, ‘drive’, ‘drive_service’, ‘all’, ‘all_private’, ‘none’"""
-    G = ox.graph_from_address(loc, dist=dist, network_type=transport_mode)
+def create_graph(city, dist, transport_mode):
+    G = ox.graph_from_address(city, dist=dist, network_type=transport_mode)
     return G
 
 
-# def load_graph():
-#     G = ox.load_graphml("./data/graph.graphml")
-#     return G
+def get_max_profit(dists, busLists, fixedPrice):
+    groups = []
+    dists = sorted(dists, key=lambda var: var[0], reverse=True)
+    busLists = sorted(busLists, key=lambda var: var.fuelefficiency)
+    profit = 0
+    i = 0
+    for di in dists:
+
+        cur_profit = fixedPrice*di[1] - busLists[i].fuelefficiency*di[0]
+        if(cur_profit > 0):
+            profit += cur_profit
+            groups.append(di[2])
+            i += 1
+            if(i >= len(busLists)):
+                break
+    return profit, groups
 
 
-def loadSample(G):
-    Rpairs = []
-    all = list(G.nodes(data=True))
-    for i in range(3):
-        src = all[random.randrange(0, len(all))]
-        dest = all[random.randrange(0, len(all))]
-        if(src != dest):
-            Rpairs.append(
-                (NPair(src[1], dest[1], "12", "12"), (src[0], dest[0])))
-    return Rpairs
+def colour_routes(G, routes):
+    colours = ['r', 'g', 'b', 'y', 'c']
+    cindex = 0
+    froutes = []
+    fcolours = []
+    for grp in routes:
+        # print(grp)
+        for i in range(0, len(grp)-1):
+            temp = ox.shortest_path(G, grp[i], grp[i+1])
+            froutes.append(temp)
+            fcolours.append(colours[cindex % len(colours)])
+            # return froutes, fcolours
+        cindex += 1
+    # print(froutes, fcolours)
+    return froutes, fcolours
 
 
-def find_route_pair(G, RPairs):
-    routes = []
-    for pair in RPairs:
-        st_node = pair[1][0]
-        end_node = pair[1][1]
-        try:
-            routes.append(nx.shortest_path(
-                G, st_node, end_node, weight='travel_time'))
-        except:
-            print("no route")
-            pass
-        # routes.append([pair[1][0]])
-    return routes
+def assign_osxid(G, booking):
+    booking.osxsid = ox.get_nearest_node(
+        G, (float(booking.src_lat), float(booking.src_long)))
+    booking.osxdid = ox.get_nearest_node(
+        G, (float(booking.dst_lat), float(booking.dst_long)))
 
 
-def validate(seq, RPairs):
-    temp = [0]*len(RPairs)
-    flag = 0
-    for x in seq:
-        for y in range(len(RPairs)):
-            if x == RPairs[y][0]:
-                temp[y] = 1
-            elif ((x == RPairs[y][1]) and (temp[y] == 0)):
-                flag = 1
-    if flag == 0:
-        return 0
-    return 1
-
-
-def next_permutation(L):
-    '''
-    Permute the list L in-place to generate the next lexicographic permutation.
-    Return True if such a permutation exists, else return False.
-    '''
-
-    n = len(L)
-
-    # ------------------------------------------------------------
-
-    # Step 1: find rightmost position i such that L[i] < L[i+1]
-    i = n - 2
-    while i >= 0 and L[i] >= L[i+1]:
-        i -= 1
-
-    if i == -1:
-        return False
-
-    # ------------------------------------------------------------
-
-    # Step 2: find rightmost position j to the right of i such that L[j] > L[i]
-    j = i + 1
-    while j < n and L[j] > L[i]:
-        j += 1
-    j -= 1
-
-    # ------------------------------------------------------------
-
-    # Step 3: swap L[i] and L[j]
-    L[i], L[j] = L[j], L[i]
-
-    # ------------------------------------------------------------
-
-    # Step 4: reverse everything to the right of i
-    left = i + 1
-    right = n - 1
-
-    while left < right:
-        L[left], L[right] = L[right], L[left]
-        left += 1
-        right -= 1
-
-    return True
-
-
-def sequence_distance(G, seq):
-    res = 0
-    for i in range(len(seq)-1):
-        try:
-            res = res + \
-                nx.shortest_path_length(
-                    G, seq[i], seq[i+1], weight='travel_time')
-        except:
-            return sys.maxsize
-    return res
-
-
-def create_perm(G, RPairs):
-    perm = []
-    int_nodes = []
-    for pair in RPairs:
-        int_nodes.append(pair[0])
-        int_nodes.append(pair[1])
-    L = int_nodes
-    L.sort()
-    min_dist = sys.maxsize
-    count = 0
-    min_perm = []
-    while True:
-        if validate(L, RPairs) == 0:
-            temp = sequence_distance(G, L)
-            if(temp < min_dist):
-                min_dist = temp
-                min_perm = L
-            #print(L)
-            count = count + 1
-        if not next_permutation(L):
-            break
-    return min_dist,min_perm
-
-
-def sorted_k_partitions(seq, k):
-    """Returns a list of all unique k-partitions of `seq`.
-
-    Each partition is a list of parts, and each part is a tuple.
-
-    The parts in each individual partition will be sorted in shortlex
-    order (i.e., by length first, then lexicographically).
-
-    The overall list of partitions will then be sorted by the length
-    of their first part, the length of their second part, ...,
-    the length of their last part, and then lexicographically.
-    """
-    n = len(seq)
-    groups = []  # a list of lists, currently empty
-
-    def generate_partitions(i):
-        if i >= n:
-            yield list(map(tuple, groups))
-        else:
-            if n - i > k - len(groups):
-                for group in groups:
-                    group.append(seq[i])
-                    yield from generate_partitions(i + 1)
-                    group.pop()
-
-            if len(groups) < k:
-                groups.append([seq[i]])
-                yield from generate_partitions(i + 1)
-                groups.pop()
-
-    result = generate_partitions(0)
-
-    # Sort the parts in each partition in shortlex order
-    result = [sorted(ps, key=lambda p: (len(p), p)) for ps in result]
-    # Sort partitions by the length of each part, then lexicographically.
-    result = sorted(result, key=lambda ps: (*map(len, ps), ps))
-
-    return result
-
-
-def create_route(city, busList, bookingList):
-    G = create_graph(city, 10000, "all")
+def create_route(city, busList, bookingList, fixedPrice=1):
+    G = create_graph(city, 10000, "drive")
     for booking in bookingList:
-        booking.osxsid = ox.get_nearest_node(
-            G, (float(booking.src_lat), float(booking.src_long)))
-        booking.osxdid = ox.get_nearest_node(
-            G, (float(booking.dst_lat), float(booking.dst_long)))
-# G = create_graph(location, 1000, "drive")
-    # G = load_graph()
-    # RPairs = loadSample(G)
+        assign_osxid(G, booking)
     inodes = []
     for pairs in bookingList:
-        temp = []
-        temp.append(pairs.osxsid)  # src id
-        temp.append(pairs.osxdid)  # dst id
-        temp.append(pairs.user.id)
-        temp.append(pairs.etime)
-        print(temp)
+        temp = [pairs.osxsid, pairs.osxdid, pairs.user.id, pairs.etime,
+                nx.shortest_path_length(G, pairs.osxsid, pairs.osxdid)]
         inodes.append(temp)
-    min_ans = sys.maxsize
-    min_dist = []
-    for k in range(1, 3):
-        for groups in sorted_k_partitions(inodes, k):
+    if(len(busList) == 0):
+        return 0
+    final_ans = {"max_profit": 0, "groups": []}
+    for k in range(2, len(busList)+2):  # also enable empty combinations
+        skp = sorted_k_partitions(inodes, k)
+        for groups in skp:
             temp_dist = []
-            temp_time = 0
+            cur_profit = 0
             print(k, groups)
             for test in groups:
-                a,b = create_perm(G,test)
-                temp_time = a + temp_time
-                temp_dist.append(b)
-            if temp_time < min_ans:
-                min_dist = temp_dist
-                min_ans = temp_time
-    print(min_ans,min_dist)
-    #routes = find_route_pair(G, RPairs)
-    # ox.plot_graph_routes(G, routes)       print(k, groups)
+                a, b, valid = create_perm(G, test)
+                if valid:
+                    # temp_time = a + temp_time
+                    temp = 0
+                    for pair in test:
+                        temp += pair[4]
+                    temp_dist.append([a, temp, b])
+                    # temp_customer_dist.append(temp)
+            cur_profit, grps = get_max_profit(temp_dist, busList, fixedPrice)
+            if cur_profit > final_ans["max_profit"]:
+                final_ans["max_profit"] = cur_profit
+                final_ans["groups"] = grps
+
+    print(final_ans, "test")
+    froutes, fcolours = colour_routes(G, final_ans["groups"])
+    # try:
+    # fig, ax = ox.plot_graph(G)
+    fig, ax = ox.plot_graph_routes(G, froutes, fcolours)
+    fig.savefig('test.png')
+    print(ax)
+    # except:
+    #     pass
+    print(final_ans["max_profit"])
