@@ -59,9 +59,9 @@ def validate(seq, RPairs):
     flag = 0
     for x in seq:
         for y in range(len(RPairs)):
-            if x == RPairs[y][1][0]:
+            if x == RPairs[y][0]:
                 temp[y] = 1
-            elif ((x == RPairs[y][1][1]) and (temp[y] == 0)):
+            elif ((x == RPairs[y][1]) and (temp[y] == 0)):
                 flag = 1
     if flag == 0:
         return 0
@@ -129,24 +129,24 @@ def create_perm(G, RPairs):
     perm = []
     int_nodes = []
     for pair in RPairs:
-        int_nodes.append(pair[1][0])
-        int_nodes.append(pair[1][1])
+        int_nodes.append(pair[0])
+        int_nodes.append(pair[1])
     L = int_nodes
     L.sort()
     min_dist = sys.maxsize
     count = 0
+    min_perm = []
     while True:
         if validate(L, RPairs) == 0:
             temp = sequence_distance(G, L)
             if(temp < min_dist):
                 min_dist = temp
-            print(L)
+                min_perm = L
+            #print(L)
             count = count + 1
         if not next_permutation(L):
             break
-    print(min_dist)
-    print(count)
-    print(sys.maxsize)
+    return min_dist,min_perm
 
 
 def sorted_k_partitions(seq, k):
@@ -208,10 +208,20 @@ def create_route(city, busList, bookingList):
         temp.append(pairs.etime)
         print(temp)
         inodes.append(temp)
-
-    for k in range(len(busList)+1):
+    min_ans = sys.maxsize
+    min_dist = []
+    for k in range(1, 3):
         for groups in sorted_k_partitions(inodes, k):
+            temp_dist = []
+            temp_time = 0
             print(k, groups)
-    #create_perm(G, RPairs)
+            for test in groups:
+                a,b = create_perm(G,test)
+                temp_time = a + temp_time
+                temp_dist.append(b)
+            if temp_time < min_ans:
+                min_dist = temp_dist
+                min_ans = temp_time
+    print(min_ans,min_dist)
     #routes = find_route_pair(G, RPairs)
     # ox.plot_graph_routes(G, routes)       print(k, groups)
