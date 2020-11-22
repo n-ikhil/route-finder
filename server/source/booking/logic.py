@@ -204,10 +204,20 @@ def create_route(city, busList, bookingList):
         temp.append(pairs.etime)
         print(temp)
         inodes.append(temp)
-
+    min_ans = sys.maxsize
+    min_dist = []
     for k in range(1, 3):
         for groups in sorted_k_partitions(inodes, k):
+            temp_dist = []
+            temp_time = 0
             print(k, groups)
-    print(create_perm(G, inodes))
+            for test in groups:
+                a,b = create_perm(G,test)
+                temp_time = a + temp_time
+                temp_dist.append(b)
+            if temp_time < min_ans:
+                min_dist = temp_dist
+                min_ans = temp_time
+    print(min_ans,min_dist)
     #routes = find_route_pair(G, RPairs)
     # ox.plot_graph_routes(G, routes)       print(k, groups)
