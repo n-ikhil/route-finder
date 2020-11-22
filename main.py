@@ -55,9 +55,9 @@ def validate(seq, RPairs):
     flag = 0
     for x in seq:
         for y in range(len(RPairs)):
-            if x == RPairs[y][1][0]:
+            if x == RPairs[y][0]:
                 temp[y] = 1
-            elif ((x == RPairs[y][1][1]) and (temp[y] == 0)):
+            elif ((x == RPairs[y][1]) and (temp[y] == 0)):
                 flag = 1
     if flag == 0:
         return 0
@@ -125,8 +125,8 @@ def create_perm(G, RPairs):
     perm = []
     int_nodes = []
     for pair in RPairs:
-        int_nodes.append(pair[1][0])
-        int_nodes.append(pair[1][1])
+        int_nodes.append(pair[0])
+        int_nodes.append(pair[1])
     L = int_nodes
     L.sort()
     min_dist = sys.maxsize
@@ -198,6 +198,6 @@ for pairs in RPairs:
 for k in range(1, 3):
     for groups in sorted_k_partitions(inodes, k):
         print(k, groups)
-create_perm(G, RPairs)
+create_perm(G, inodes)
 #routes = find_route_pair(G, RPairs)
 # ox.plot_graph_routes(G, routes)       print(k, groups)

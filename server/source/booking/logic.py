@@ -55,9 +55,9 @@ def validate(seq, RPairs):
     flag = 0
     for x in seq:
         for y in range(len(RPairs)):
-            if x == RPairs[y][1][0]:
+            if x == RPairs[y][0]:
                 temp[y] = 1
-            elif ((x == RPairs[y][1][1]) and (temp[y] == 0)):
+            elif ((x == RPairs[y][1]) and (temp[y] == 0)):
                 flag = 1
     if flag == 0:
         return 0
@@ -125,8 +125,8 @@ def create_perm(G, RPairs):
     perm = []
     int_nodes = []
     for pair in RPairs:
-        int_nodes.append(pair[1][0])
-        int_nodes.append(pair[1][1])
+        int_nodes.append(pair[0])
+        int_nodes.append(pair[1])
     L = int_nodes
     L.sort()
     min_dist = sys.maxsize
