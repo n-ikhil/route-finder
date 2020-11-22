@@ -1,3 +1,6 @@
+import sys
+from .models import *
+from django.core.wsgi import get_wsgi_application
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point, LineString
@@ -5,8 +8,9 @@ import plotly_express as px
 import networkx as nx
 import osmnx as ox
 import random
+import os
+
 # from models import NPair
-import sys
 ox.config(use_cache=True, log_console=True)
 
 location = "Delhi"
@@ -186,7 +190,7 @@ def sorted_k_partitions(seq, k):
 
 
 def create_route(city, busList, bookingList):
-    G = create_graph(city, 1000, "all")
+    G = create_graph(city, 10000, "all")
     for booking in bookingList:
         booking.osxsid = ox.get_nearest_node(
             G, (float(booking.src_lat), float(booking.src_long)))
@@ -205,7 +209,7 @@ def create_route(city, busList, bookingList):
         print(temp)
         inodes.append(temp)
 
-    for k in range(1, 3):
+    for k in range(len(busList)+1):
         for groups in sorted_k_partitions(inodes, k):
             print(k, groups)
     #create_perm(G, RPairs)
