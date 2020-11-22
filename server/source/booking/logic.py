@@ -131,18 +131,18 @@ def create_perm(G, RPairs):
     L.sort()
     min_dist = sys.maxsize
     count = 0
+    min_perm = []
     while True:
         if validate(L, RPairs) == 0:
             temp = sequence_distance(G, L)
             if(temp < min_dist):
                 min_dist = temp
-            print(L)
+                min_perm = L
+            #print(L)
             count = count + 1
         if not next_permutation(L):
             break
-    print(min_dist)
-    print(count)
-    print(sys.maxsize)
+    return min_dist,min_perm
 
 
 def sorted_k_partitions(seq, k):
@@ -208,6 +208,6 @@ def create_route(city, busList, bookingList):
     for k in range(1, 3):
         for groups in sorted_k_partitions(inodes, k):
             print(k, groups)
-    #create_perm(G, RPairs)
+    print(create_perm(G, inodes))
     #routes = find_route_pair(G, RPairs)
     # ox.plot_graph_routes(G, routes)       print(k, groups)
