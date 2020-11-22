@@ -48,8 +48,9 @@ def find_route_pair(G, RPairs):
             pass
         # routes.append([pair[1][0]])
     return routes
-    
-def validate(seq,RPairs):
+
+
+def validate(seq, RPairs):
     temp = [0]*len(RPairs)
     flag = 0
     for x in seq:
@@ -62,60 +63,65 @@ def validate(seq,RPairs):
         return 0
     return 1
 
+
 def next_permutation(L):
     '''
     Permute the list L in-place to generate the next lexicographic permutation.
     Return True if such a permutation exists, else return False.
     '''
-     
+
     n = len(L)
- 
-    #------------------------------------------------------------
- 
+
+    # ------------------------------------------------------------
+
     # Step 1: find rightmost position i such that L[i] < L[i+1]
     i = n - 2
     while i >= 0 and L[i] >= L[i+1]:
         i -= 1
-     
+
     if i == -1:
         return False
- 
-    #------------------------------------------------------------
- 
+
+    # ------------------------------------------------------------
+
     # Step 2: find rightmost position j to the right of i such that L[j] > L[i]
     j = i + 1
     while j < n and L[j] > L[i]:
         j += 1
     j -= 1
-     
-    #------------------------------------------------------------
- 
+
+    # ------------------------------------------------------------
+
     # Step 3: swap L[i] and L[j]
     L[i], L[j] = L[j], L[i]
-     
-    #------------------------------------------------------------
- 
+
+    # ------------------------------------------------------------
+
     # Step 4: reverse everything to the right of i
     left = i + 1
     right = n - 1
- 
+
     while left < right:
         L[left], L[right] = L[right], L[left]
         left += 1
         right -= 1
-             
+
     return True
 
-def sequence_distance(G,seq):
+
+def sequence_distance(G, seq):
     res = 0
     for i in range(len(seq)-1):
         try:
-            res = res + nx.shortest_path_length(G,seq[i],seq[i+1],weight='travel_time')    
+            res = res + \
+                nx.shortest_path_length(
+                    G, seq[i], seq[i+1], weight='travel_time')
         except:
             return sys.maxsize
     return res
 
-def create_perm(G,RPairs):
+
+def create_perm(G, RPairs):
     perm = []
     int_nodes = []
     for pair in RPairs:
@@ -126,8 +132,8 @@ def create_perm(G,RPairs):
     min_dist = sys.maxsize
     count = 0
     while True:
-        if validate(L,RPairs) == 0:
-            temp = sequence_distance(G,L)
+        if validate(L, RPairs) == 0:
+            temp = sequence_distance(G, L)
             if(temp < min_dist):
                 min_dist = temp
             print(L)
@@ -137,6 +143,7 @@ def create_perm(G,RPairs):
     print(min_dist)
     print(count)
     print(sys.maxsize)
+
 
 def sorted_k_partitions(seq, k):
     """Returns a list of all unique k-partitions of `seq`.
@@ -171,12 +178,11 @@ def sorted_k_partitions(seq, k):
     result = generate_partitions(0)
 
     # Sort the parts in each partition in shortlex order
-    result = [sorted(ps, key = lambda p: (len(p), p)) for ps in result]
+    result = [sorted(ps, key=lambda p: (len(p), p)) for ps in result]
     # Sort partitions by the length of each part, then lexicographically.
-    result = sorted(result, key = lambda ps: (*map(len, ps), ps))
+    result = sorted(result, key=lambda ps: (*map(len, ps), ps))
 
     return result
-
 
 
 # G = create_graph(location, 1000, "drive")
@@ -189,10 +195,9 @@ for pairs in RPairs:
     temp.append(pairs[1][1])
     inodes.append(temp)
 
-for k in 1, 2:
+for k in range(1, 3):
     for groups in sorted_k_partitions(inodes, k):
         print(k, groups)
-create_perm(G,RPairs)
+create_perm(G, RPairs)
 #routes = find_route_pair(G, RPairs)
-#ox.plot_graph_routes(G, routes)
-
+# ox.plot_graph_routes(G, routes)       print(k, groups)

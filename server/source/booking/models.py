@@ -14,6 +14,8 @@ class Booking(models.Model):
     # distance between start and end, based on the path
     # distance = models.IntegerField()
     # meaning this booking is  confirmed
+    osxsid = models.IntegerField(default=1)
+    osxdid = models.IntegerField(default=1)
     confirmed = models.BooleanField(default=False)
 
     def __str__(self):

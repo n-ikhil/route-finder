@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from requests.api import request
 from .models import Buses, OperatingCities, Booking
+from .logic import *
 
 
 def index(request):
@@ -52,7 +53,13 @@ def status(request, city=""):
     if not request.user.is_authenticated:
         return redirect("log_in")
     if request.user.is_superuser:
-        # city = request.GET.get("city")
+        city = "Delhi"
+        # city = request.GET.get("")
+        bookingList = Booking.objects.all().filter(city=city)
+        city = OperatingCities.objects.get(city=city)
+        busList = Buses.objects.all().filter(city=city)
+        print(city, bookingList, busList)
+        create_route(city, busList, bookingList)
         return render(request, "plain.html", {"data": city})
     else:
         if request.method == "GET":
