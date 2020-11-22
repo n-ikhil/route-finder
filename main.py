@@ -6,6 +6,7 @@ import networkx as nx
 import osmnx as ox
 import random
 from models import NPair
+import sys
 ox.config(use_cache=True, log_console=True)
 
 location = "Delhi"
@@ -25,7 +26,7 @@ def load_graph():
 def loadSample(G):
     Rpairs = []
     all = list(G.nodes(data=True))
-    for i in range(2):
+    for i in range(3):
         src = all[random.randrange(0, len(all))]
         dest = all[random.randrange(0, len(all))]
         if(src != dest):
@@ -49,69 +50,132 @@ def find_route_pair(G, RPairs):
             pass
         # routes.append([pair[1][0]])
     return routes
-
-def check(perm,RPairs):
-    result = []
-    for comb in perm:
-        temp = [0]*len(RPairs)
-        flag = 0
-        for x in comb:
-            for y in range(len(RPairs)):
-                if x == RPairs[y][1][0]:
-                    temp[y] = 1
-                elif ((x == RPairs[y][1][1]) and (temp[y] == 0)):
-                    flag = 1
-        if flag == 0:
-            result.append(comb)
-    return result
     
+def validate(seq,RPairs):
+    temp = [0]*len(RPairs)
+    flag = 0
+    for x in seq:
+        for y in range(len(RPairs)):
+            if x == RPairs[y][1][0]:
+                temp[y] = 1
+            elif ((x == RPairs[y][1][1]) and (temp[y] == 0)):
+                flag = 1
+    if flag == 0:
+        return 0
+    return 1
 
+def next_permutation(L):
+    '''
+    Permute the list L in-place to generate the next lexicographic permutation.
+    Return True if such a permutation exists, else return False.
+    '''
+     
+    n = len(L)
+ 
+    #------------------------------------------------------------
+ 
+    # Step 1: find rightmost position i such that L[i] < L[i+1]
+    i = n - 2
+    while i >= 0 and L[i] >= L[i+1]:
+        i -= 1
+     
+    if i == -1:
+        return False
+ 
+    #------------------------------------------------------------
+ 
+    # Step 2: find rightmost position j to the right of i such that L[j] > L[i]
+    j = i + 1
+    while j < n and L[j] > L[i]:
+        j += 1
+    j -= 1
+     
+    #------------------------------------------------------------
+ 
+    # Step 3: swap L[i] and L[j]
+    L[i], L[j] = L[j], L[i]
+     
+    #------------------------------------------------------------
+ 
+    # Step 4: reverse everything to the right of i
+    left = i + 1
+    right = n - 1
+ 
+    while left < right:
+        L[left], L[right] = L[right], L[left]
+        left += 1
+        right -= 1
+             
+    return True
 
-def permutation(lst): 
-  
-    # If lst is empty then there are no permutations 
-    if len(lst) == 0: 
-        return [] 
-  
-    # If there is only one element in lst then, only 
-    # one permuatation is possible 
-    if len(lst) == 1: 
-        return [lst] 
-  
-    # Find the permutations for lst if there are 
-    # more than 1 characters 
-  
-    l = [] # empty list that will store current permutation 
-  
-    # Iterate the input(lst) and calculate the permutation 
-    for i in range(len(lst)): 
-       m = lst[i] 
-  
-       # Extract lst[i] or m from the list.  remLst is 
-       # remaining list 
-       remLst = lst[:i] + lst[i+1:] 
-  
-       # Generating all permutations where m is first 
-       # element 
-       for p in permutation(remLst):
-            l.append([m] + p) 
-    return l 
+def sequence_distance(G,seq):
+    res = 0
+    for i in range(len(seq)-1):
+        try:
+            res = res + nx.shortest_path_length(G,seq[i],seq[i+1],weight='travel_time')    
+        except:
+            return sys.maxsize
+    return res
 
-
-
-
-
-
-def create_perm(RPairs):
+def create_perm(G,RPairs):
     perm = []
     int_nodes = []
     for pair in RPairs:
         int_nodes.append(pair[1][0])
         int_nodes.append(pair[1][1])
-    perm = permutation(int_nodes)
-    print(len(perm))
-    result = check(perm,RPairs)
-    print(len(result))
+    L = int_nodes
+    L.sort()
+    min_dist = sys.maxsize
+    count = 0
+    while True:
+        if validate(L,RPairs) == 0:
+            temp = sequence_distance(G,L)
+            if(temp < min_dist):
+                min_dist = temp
+            print(L)
+            count = count + 1
+        if not next_permutation(L):
+            break
+    print(min_dist)
+    print(count)
+    print(sys.maxsize)
+
+def sorted_k_partitions(seq, k):
+    """Returns a list of all unique k-partitions of `seq`.
+
+    Each partition is a list of parts, and each part is a tuple.
+
+    The parts in each individual partition will be sorted in shortlex
+    order (i.e., by length first, then lexicographically).
+
+    The overall list of partitions will then be sorted by the length
+    of their first part, the length of their second part, ...,
+    the length of their last part, and then lexicographically.
+    """
+    n = len(seq)
+    groups = []  # a list of lists, currently empty
+
+    def generate_partitions(i):
+        if i >= n:
+            yield list(map(tuple, groups))
+        else:
+            if n - i > k - len(groups):
+                for group in groups:
+                    group.append(seq[i])
+                    yield from generate_partitions(i + 1)
+                    group.pop()
+
+            if len(groups) < k:
+                groups.append([seq[i]])
+                yield from generate_partitions(i + 1)
+                groups.pop()
+
+    result = generate_partitions(0)
+
+    # Sort the parts in each partition in shortlex order
+    result = [sorted(ps, key = lambda p: (len(p), p)) for ps in result]
+    # Sort partitions by the length of each part, then lexicographically.
+    result = sorted(result, key = lambda ps: (*map(len, ps), ps))
 
     return result
 
@@ -120,7 +184,17 @@ def create_perm(RPairs):
 # G = create_graph(location, 1000, "drive")
 G = load_graph()
 RPairs = loadSample(G)
-perm = create_perm(RPairs)
+inodes = []
+for pairs in RPairs:
+    temp = []
+    temp.append(pairs[1][0])
+    temp.append(pairs[1][1])
+    inodes.append(temp)
+
+for k in 1, 2:
+    for groups in sorted_k_partitions(inodes, k):
+        print(k, groups)
+create_perm(G,RPairs)
 #routes = find_route_pair(G, RPairs)
 #ox.plot_graph_routes(G, routes)
 
