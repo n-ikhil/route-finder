@@ -37,8 +37,6 @@ def loadSample(G):
 def find_route_pair(G, RPairs):
     routes = []
     for pair in RPairs:
-        # st_node = ox.get_nearest_node(G, (pair[0].startLocation))
-        # end_node = ox.get_nearest_node(G, pair[0].endLocation)
         st_node = pair[1][0]
         end_node = pair[1][1]
         try:
