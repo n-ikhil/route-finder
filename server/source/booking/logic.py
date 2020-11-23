@@ -1,3 +1,4 @@
+from threading import Thread
 import matplotlib
 from matplotlib import pyplot
 from .models import *
@@ -7,12 +8,22 @@ import plotly_express as px
 import networkx as nx
 import osmnx as ox
 from .perms import *
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 ox.config(use_cache=True, log_console=True)
 
 
+def start_new_thread(function):
+    def decorator(*args, **kwargs):
+        t = Thread(target=function, args=args, kwargs=kwargs)
+        t.daemon = True
+        t.start()
+    return decorator
+
+
 def create_graph(city, dist, transport_mode):
-    G = ox.graph_from_address(city, dist=dist, network_type=transport_mode)
+    # G = ox.graph_from_address(city, dist=dist, network_type=transport_mode)
+    G = ox.graph_from_point(city, dist=dist, network_type=transport_mode)
+
     return G
 
 
@@ -55,8 +66,24 @@ def assign_osxid(G, booking):
         G, (float(booking.dst_lat), float(booking.dst_long)))
 
 
+# @start_new_thread
 def create_route(city, busList, bookingList, fixedPrice=1):
-    G = create_graph(city, 10000, "drive")
+    erFlag = 0
+    try:
+        sumx = 0
+        sumy = 0
+        for book in bookingList:
+            sumx += float(book.src_lat)
+            sumy += float(book.src_long)
+        sumx = sumx/len(bookingList)
+        sumy = sumy/len(bookingList)
+        city = (float(sumx), float(sumy))
+    except:
+        print("internal errororor")
+        return erFlag
+    # city centre is taken as average of of lat,long pairs
+    # print(city)
+    G = create_graph(city, 5000, "drive")
     for booking in bookingList:
         assign_osxid(G, booking)
     inodes = []
@@ -65,9 +92,10 @@ def create_route(city, busList, bookingList, fixedPrice=1):
                 nx.shortest_path_length(G, pairs.osxsid, pairs.osxdid)]
         inodes.append(temp)
     if(len(busList) == 0):
-        return 0
+        return erFlag
     final_ans = {"max_profit": 0, "groups": []}
-    for k in range(2, len(busList)+2):  # also enable empty combinations
+    for k in range(1, len(busList)+2):
+        # +2 because to accomodate for none groups as well
         skp = sorted_k_partitions(inodes, k)
         for groups in skp:
             temp_dist = []
@@ -88,7 +116,8 @@ def create_route(city, busList, bookingList, fixedPrice=1):
     froutes, fcolours = colour_routes(G, final_ans["groups"])
     try:
         fig, ax = ox.plot_graph_routes(G, froutes, fcolours)
-        fig.savefig('test.png')
+        fig.savefig('./booking/static/test.png')
+        return final_ans["max_profit"]
     except:
         print("error printing")
         pass

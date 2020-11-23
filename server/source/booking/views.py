@@ -47,17 +47,22 @@ def status(request, city=""):
     if not request.user.is_authenticated:
         return redirect("log_in")
     if request.user.is_superuser:
-        city = "Delhi"
-        bookingList = Booking.objects.all().filter(city=city)
+        # city = "Delhi"
+        city2 = city
+        bookingList = Booking.objects.all().filter(city=city, ready=True)
         city = OperatingCities.objects.get(city=city)
         busList = Buses.objects.all().filter(city=city)
         fixedPrice = 1
         try:
             fixedPrice = Constant.objects.all()[0].customer_prices_per_km
+            print(fixedPrice)
         except:
+            print("using default fixed price")
             pass
-        create_route(city, busList, bookingList, fixedPrice)
-        return render(request, "plain.html", {"data": city})
+        res = create_route(city, busList, bookingList, fixedPrice)
+        if(res == 0):
+            return render(request, "plain.html", {"data": "some error loading "+city2})
+        return render(request, "img.html", {"data": city2+"\nmax profit is: "+str(res)+" units"})
     else:
         if request.method == "GET":
             res = Booking.objects.filter(user=request.user.id).exists()

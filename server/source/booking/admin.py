@@ -4,4 +4,5 @@ from .models import *
 admin.site.register(OperatingCities)
 admin.site.register(Booking)
 admin.site.register(Buses)
+admin.site.register(Constant)
 # admin.register(OperatingCities)

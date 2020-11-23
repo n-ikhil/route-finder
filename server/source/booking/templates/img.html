@@ -1,0 +1,9 @@
+{% extends 'layouts/default/page.html' %} {% load bootstrap4 %} {% load i18n %}
+{% block content %} {% load static%}
+<!-- Prepare django to load static files -->
+<div class="row justify-content-center">
+  <div class="col-12 align-self-center">
+    <img src={% static "test.png" %}> {{data}}
+  </div>
+</div>
+{% endblock %}
