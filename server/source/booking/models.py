@@ -29,9 +29,16 @@ class OperatingCities(models.Model):
         return str(self.city)
 
 
+class Constant(models.Model):
+    customer_prices_per_km = models.IntegerField(default=1)
+
+    def __str__(self):
+        self.customer_prices_per_km
+
+
 class Buses(models.Model):
     city = models.ForeignKey(OperatingCities, on_delete=models.CASCADE)
-    fuelefficiency = models.IntegerField()# rupee per unit dist
+    fuelefficiency = models.IntegerField()  # rupee per unit dist
     working = models.BooleanField(default=True)
 
     # whether the bus is usable

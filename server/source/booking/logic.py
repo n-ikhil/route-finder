@@ -1,6 +1,5 @@
 import matplotlib
 from matplotlib import pyplot
-import sys
 from .models import *
 import pandas as pd
 import geopandas as gpd
@@ -9,7 +8,6 @@ import networkx as nx
 import osmnx as ox
 from .perms import *
 matplotlib.use('TkAgg')
-# from models import NPair
 ox.config(use_cache=True, log_console=True)
 
 
@@ -42,14 +40,11 @@ def colour_routes(G, routes):
     froutes = []
     fcolours = []
     for grp in routes:
-        # print(grp)
         for i in range(0, len(grp)-1):
             temp = ox.shortest_path(G, grp[i], grp[i+1])
             froutes.append(temp)
             fcolours.append(colours[cindex % len(colours)])
-            # return froutes, fcolours
         cindex += 1
-    # print(froutes, fcolours)
     return froutes, fcolours
 
 
@@ -81,24 +76,20 @@ def create_route(city, busList, bookingList, fixedPrice=1):
             for test in groups:
                 a, b, valid = create_perm(G, test)
                 if valid:
-                    # temp_time = a + temp_time
                     temp = 0
                     for pair in test:
                         temp += pair[4]
                     temp_dist.append([a, temp, b])
-                    # temp_customer_dist.append(temp)
             cur_profit, grps = get_max_profit(temp_dist, busList, fixedPrice)
             if cur_profit > final_ans["max_profit"]:
                 final_ans["max_profit"] = cur_profit
                 final_ans["groups"] = grps
-
     print(final_ans, "test")
     froutes, fcolours = colour_routes(G, final_ans["groups"])
-    # try:
-    # fig, ax = ox.plot_graph(G)
-    fig, ax = ox.plot_graph_routes(G, froutes, fcolours)
-    fig.savefig('test.png')
-    print(ax)
-    # except:
-    #     pass
+    try:
+        fig, ax = ox.plot_graph_routes(G, froutes, fcolours)
+        fig.savefig('test.png')
+    except:
+        print("error printing")
+        pass
     print(final_ans["max_profit"])
